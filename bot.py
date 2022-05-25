@@ -1,3 +1,4 @@
+from aiogram.types.inline_keyboard import InlineKeyboardMarkup, InlineKeyboardButton
 from config import TOKEN
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
@@ -33,9 +34,35 @@ async def search_state_case(message: types.Message):
     if not jutsu.search(message.text):
         await bot.send_message(message.chat.id, 'Не удалось найти 😔')
     else:
-        await bot.send_message(message.chat.id, 'Нашлось аниме 😼\n' + jutsu.name)
+        anime_button = InlineKeyboardButton(jutsu.name, callback_data='anime_button')
+        keyboard = InlineKeyboardMarkup().add(anime_button)
+        await bot.send_message(message.chat.id, 'Нашлось аниме 😼', reply_markup=keyboard)
     state = dp.current_state(user=message.from_user.id)
     await state.reset_state()
+
+@dp.callback_query_handler(lambda c: c.data == 'anime_button')
+async def process_callback_anime_button(callback_query: types.CallbackQuery):
+    await bot.answer_callback_query(callback_query.id)
+    keyboard = InlineKeyboardMarkup()
+    for season in jutsu.seasons:
+        keyboard.add(InlineKeyboardButton(season, callback_data=season))
+    await callback_query.message.edit_text(jutsu.name, reply_markup=keyboard)
+
+@dp.callback_query_handler(lambda c: c.data in jutsu.seasons)
+async def process_callback_season_button(callback_query: types.CallbackQuery):
+    await bot.answer_callback_query(callback_query.id)
+    jutsu.select_season(callback_query.data)
+    keyboard = InlineKeyboardMarkup()
+    for seria in jutsu.series:
+        keyboard.add(InlineKeyboardButton(seria, callback_data=seria))
+    await callback_query.message.edit_text(jutsu.name, reply_markup=keyboard)
+
+@dp.callback_query_handler(lambda c: c.data in jutsu.series)
+async def process_callback_seria_button(callback_query: types.CallbackQuery):
+    await bot.answer_callback_query(callback_query.id)
+    jutsu.select_seria(callback_query.data)
+    jutsu.link()
+    await bot.send_message(callback_query.from_user.id, jutsu.url + jutsu.data[jutsu.season][jutsu.seria])
 
 async def shutdown(dispatcher: Dispatcher):
     await dispatcher.storage.close()
