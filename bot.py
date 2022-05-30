@@ -1,4 +1,4 @@
-from aiogram.types.inline_keyboard import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 from config import TOKEN
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
@@ -26,19 +26,22 @@ class States(Helper):
 
 @dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
-    await bot.send_message(message.chat.id, 'Привет ✨\n/search - поиск аниме\n/random - случайное аниме')
+    search_button = KeyboardButton('найти 🔎')
+    random_button = KeyboardButton('рандом 🎲')
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(search_button, random_button)
+    await bot.send_message(message.chat.id, 'Привет ✨\nДержи волшебные кнопочки', reply_markup=keyboard)
     if not users_data.get(message.from_user.id):
         users_data[message.from_user.id] = Anime_data()
     state = dp.current_state(user=message.from_user.id)
     await state.set_state(States.all()[2])
 
-@dp.message_handler(commands=['search'], state=States.STATE_START)
+@dp.message_handler(text='найти 🔎', state=States.STATE_START)
 async def process_search_command(message: types.Message):
     await bot.send_message(message.chat.id, 'Что искать будем?')
     state = dp.current_state(user=message.from_user.id)
     await state.set_state(States.all()[0])
 
-@dp.message_handler(commands=['random'], state=States.STATE_START)
+@dp.message_handler(text='рандом 🎲', state=States.STATE_START)
 async def process_random_command(message: types.Message):
     anime = all_anime[random.randint(0, len(all_anime))]
     anime_data = users_data[message.from_user.id]
