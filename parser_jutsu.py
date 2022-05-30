@@ -11,20 +11,21 @@ class Jutsu:
             {'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0'},
             {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0 Waterfox/91.10.0'}
         ]
+        self.all_anime = self.get_all()
         self.seasons = None
         self.series = None
         self.season = None
         self.seria = None
 
     def search(self, name):
-        self.html_text = requests.get(self.url + '/' + name, headers=self.headers[random.randint(0, 2)]).text
-        self.soup = BeautifulSoup(self.html_text, "html.parser")
-        if not self.soup.find('h1', class_='header_video'):
+        html_text = requests.get(self.url + '/' + name, headers=self.headers[random.randint(0, 2)]).text
+        soup = BeautifulSoup(html_text, "html.parser")
+        if not soup.find('h1', class_='header_video'):
             return False
         else:
-            self.name = self.soup.find('h1', class_='header_video').text
+            self.name = soup.find('h1', class_='header_video').text
         self.data = {}
-        for i in self.soup.find_all(class_='short-btn'):
+        for i in soup.find_all(class_='short-btn'):
             text = i.text.split()
             for j in range(len(text) - 1):
                 if text[j].isnumeric() and text[j + 1] == 'сезон':
@@ -81,4 +82,23 @@ class Jutsu:
             print('start')
             file.write(response.content)
         return file_name
-        
+
+    def get_all(self):
+        html_text = requests.get(self.url + '/' + 'anime', headers=self.headers[random.randint(0, 2)]).text
+        soup = BeautifulSoup(html_text, "html.parser")
+        all_anime = []
+        for i in soup.find_all(class_='all_anime_global'):
+            all_anime.append(i.find(class_='aaname').text)
+        while soup.find(class_='vnright'):
+            next = self.url + soup.find(class_='vnright')['href']
+            html_text = requests.get(next, headers=self.headers[random.randint(0, 2)]).text
+            soup = BeautifulSoup(html_text, "html.parser")
+            for i in soup.find_all(class_='all_anime_global'):
+                all_anime.append(i.find(class_='aaname').text)
+        return all_anime
+
+    def random(self):
+        name = self.all_anime[random.randint(0, len(self.all_anime))]
+        print(name)
+        self.search(name)
+        print(self.name)
