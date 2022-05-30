@@ -6,6 +6,7 @@ from aiogram.utils import executor
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.utils.helper import Helper, HelperMode, ListItem
+import random
 
 from anime import Anime_data, Jutsu
 
@@ -25,7 +26,7 @@ class States(Helper):
 
 @dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
-    await bot.send_message(message.chat.id, 'Привет 😉\nИспользуй команду /search для поиска аниме')
+    await bot.send_message(message.chat.id, 'Привет ✨\n/search - поиск аниме\n/random - случайное аниме')
     if not users_data.get(message.from_user.id):
         users_data[message.from_user.id] = Anime_data()
     state = dp.current_state(user=message.from_user.id)
@@ -39,9 +40,16 @@ async def process_search_command(message: types.Message):
 
 @dp.message_handler(commands=['random'], state=States.STATE_START)
 async def process_random_command(message: types.Message):
-    anime_button = InlineKeyboardButton(jutsu.name, callback_data='anime_button')
-    keyboard = InlineKeyboardMarkup().add(anime_button)
-    await bot.send_message(message.chat.id, 'Нашлось аниме 😼', reply_markup=keyboard)
+    anime = all_anime[random.randint(0, len(all_anime))]
+    anime_data = users_data[message.from_user.id]
+    anime_data.set_data(jutsu.get_data(anime.url))
+    anime_data.set_name(anime.name)
+    anime_button = InlineKeyboardButton('Смотреть ✅', callback_data='anime_button')
+    close_button = InlineKeyboardButton('Отмена ❌', callback_data='close_button')
+    keyboard = InlineKeyboardMarkup(row_width=1).add(anime_button, close_button)
+    await bot.send_photo(message.chat.id, photo=anime.image, reply_markup=keyboard, caption=anime_data.name)
+    state = dp.current_state(user=message.from_user.id)
+    await state.set_state(States.all()[1])
 
 @dp.message_handler(state=States.STATE_SEARCH)
 async def search_state_case(message: types.Message):
@@ -52,17 +60,25 @@ async def search_state_case(message: types.Message):
             anime_data = users_data[message.from_user.id]
             anime_data.set_data(jutsu.get_data(anime.url))
             anime_data.set_name(anime.name)
-            anime_button = InlineKeyboardButton(anime.name, callback_data='anime_button')
-            keyboard = InlineKeyboardMarkup().add(anime_button)
+            anime_button = InlineKeyboardButton('Смотреть ✅', callback_data='anime_button')
+            close_button = InlineKeyboardButton('Отмена ❌', callback_data='close_button')
+            keyboard = InlineKeyboardMarkup(row_width=1).add(anime_button, close_button)
             await bot.send_photo(message.chat.id, photo=anime.image, reply_markup=keyboard, caption=anime_data.name)
             state = dp.current_state(user=message.from_user.id)
             await state.set_state(States.all()[1])
             break
     if not search:
-        await bot.send_message(message.chat.id, 'Не удалось найти 😔')
+        await bot.send_message(message.chat.id, 'Не удалось найти ☔')
         state = dp.current_state(user=message.from_user.id)
         await state.set_state(States.all()[2])
     
+@dp.callback_query_handler(lambda c: c.data == 'close_button', state=States.STATE_SELECT)
+async def process_callback_close_button(callback_query: types.CallbackQuery):
+    await bot.answer_callback_query(callback_query.id)
+    anime_data = users_data[callback_query.from_user.id]
+    await callback_query.message.edit_caption(anime_data.name, reply_markup=None)
+    state = dp.current_state(user=callback_query.from_user.id)
+    await state.set_state(States.all()[2])
 
 @dp.callback_query_handler(lambda c: c.data == 'anime_button', state=States.STATE_SELECT)
 async def process_callback_anime_button(callback_query: types.CallbackQuery):
