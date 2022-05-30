@@ -112,27 +112,6 @@ async def process_callback_seria_button(callback_query: types.CallbackQuery):
     state = dp.current_state(user=callback_query.from_user.id)
     await state.set_state(States.all()[2])
 
-'''
-@dp.callback_query_handler(lambda c: c.data in data_jutsu_users[c.from_user.id].seasons)
-async def process_callback_season_button(callback_query: types.CallbackQuery):
-    await bot.answer_callback_query(callback_query.id)
-    jutsu = data_jutsu_users[callback_query.from_user.id]
-    jutsu.select_season(callback_query.data)
-    keyboard = InlineKeyboardMarkup()
-    for seria in jutsu.series:
-        keyboard.add(InlineKeyboardButton(seria, callback_data=seria))
-    await callback_query.message.edit_text(jutsu.name + ' ' + jutsu.season, reply_markup=keyboard)
-
-@dp.callback_query_handler(lambda c: c.data in data_jutsu_users[c.from_user.id].series)
-async def process_callback_seria_button(callback_query: types.CallbackQuery):
-    await bot.answer_callback_query(callback_query.id)
-    jutsu = data_jutsu_users[callback_query.from_user.id]
-    jutsu.select_seria(callback_query.data)
-    jutsu.link()
-    await callback_query.message.edit_text('Приятного просмотра)', reply_markup=None)
-    await bot.send_message(callback_query.from_user.id, jutsu.url + jutsu.data[jutsu.season][jutsu.seria])
-
-'''
 async def shutdown(dispatcher: Dispatcher):
     await dispatcher.storage.close()
     await dispatcher.storage.wait_closed()
