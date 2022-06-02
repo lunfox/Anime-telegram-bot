@@ -29,11 +29,20 @@ async def process_start_command(message: types.Message):
     search_button = KeyboardButton('найти 🔎')
     random_button = KeyboardButton('рандом 🎲')
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(search_button, random_button)
-    await bot.send_message(message.chat.id, 'Привет ✨\nДержи волшебные кнопочки', reply_markup=keyboard)
+    await bot.send_message(message.chat.id, 'магия ✨', reply_markup=keyboard)
     if not users_data.get(message.from_user.id):
         users_data[message.from_user.id] = Anime_data()
     state = dp.current_state(user=message.from_user.id)
     await state.set_state(States.all()[2])
+
+@dp.message_handler(commands=['start'], state=States.STATE_START)
+async def process_start_command2(message: types.Message):
+    search_button = KeyboardButton('найти 🔎')
+    random_button = KeyboardButton('рандом 🎲')
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(search_button, random_button)
+    await bot.send_message(message.chat.id, 'магия ✨', reply_markup=keyboard)
+    if not users_data.get(message.from_user.id):
+        users_data[message.from_user.id] = Anime_data()
 
 @dp.message_handler(text='найти 🔎', state=States.STATE_START)
 async def process_search_command(message: types.Message):
@@ -111,6 +120,10 @@ async def process_callback_seria_button(callback_query: types.CallbackQuery):
     await bot.send_message(callback_query.from_user.id, anime_data.url())
     state = dp.current_state(user=callback_query.from_user.id)
     await state.set_state(States.all()[2])
+
+@dp.message_handler()
+async def process_message(message: types.Message):
+    await bot.send_message(message.chat.id, 'используй /start чтобы начать')
 
 async def shutdown(dispatcher: Dispatcher):
     await dispatcher.storage.close()

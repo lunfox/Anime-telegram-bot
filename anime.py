@@ -48,11 +48,12 @@ class Jutsu:
         self.headers = [
             {'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0'},
             {'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0'},
-            {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0 Waterfox/91.10.0'}
+            {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0 Waterfox/91.10.0'},
+            {'user-agent': 'Defined'}
         ]
 
     def get_all(self):
-        html_text = requests.get(self.url + '/' + 'anime', headers=self.headers[random.randint(0, 2)]).text
+        html_text = requests.get(self.url + '/' + 'anime', headers=self.headers[3]).text
         soup = BeautifulSoup(html_text, "html.parser")
         all_anime = []
         for i in soup.find_all(class_='all_anime_global'):
@@ -74,7 +75,7 @@ class Jutsu:
         return all_anime
 
     def get_data(self, url):
-        html_text = requests.get(url, headers=self.headers[random.randint(0, 2)]).text
+        html_text = requests.get(url, headers=self.headers[3]).text
         soup = BeautifulSoup(html_text, "html.parser")
         if not soup.find('h1', class_='header_video'):
             return None
